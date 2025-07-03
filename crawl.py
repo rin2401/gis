@@ -46,7 +46,12 @@ def get_geojson(id, sapnhap=False):
 
 
 if __name__ == "__main__":
-    data = get_total()
+    if not os.path.exists(os.path.join(DIR, "data/data.json")):
+        data = get_total()
+    else:
+        with open(os.path.join(DIR, "data/data.json")) as f:
+            data = json.load(f)
+
     for d in tqdm(data):
         if os.path.exists(os.path.join(DIR, f"data/geojson/{d['MA_DIACHINH']}.json")):
             continue
