@@ -92,7 +92,9 @@
                     navigator.geolocation.getCurrentPosition(function (position) {
                         document.getElementById('lat').value = position.coords.latitude;
                         document.getElementById('lon').value = position.coords.longitude;
-                        findProvince();
+                        if (geojson) {
+                            findProvince();
+                        }
                     }, function (err) {
                         showResult('Could not get your location. You can enter it manually.', 'warning');
                     });
@@ -150,7 +152,12 @@
                 return false;
             }
 
-            function findProvince() {
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            async function findProvince() {
+                hideResult();
+                setSpinner(true);
                 const lat = parseFloat(document.getElementById('lat').value);
                 const lon = parseFloat(document.getElementById('lon').value);
                 console.log(lat, lon);
@@ -176,6 +183,8 @@
                         }
                     }
                 }
+                await sleep(100);
+                setSpinner(false);
                 if (found) {
                     showResult('Province: ' + found, 'success');
                 } else {
