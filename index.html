@@ -110,6 +110,12 @@
 
             // Load GeoJSON based on dropdown selection
             function loadGeoJSON(url) {
+                console.log(url);
+
+                if (window.location.hostname.includes("github")) {
+                    url = "https://github.com/rin2401/gis/raw/master/" + url;
+                }
+
                 geojson = null;
                 hideResult();
                 setSpinner(true);
