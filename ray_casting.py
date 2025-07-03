@@ -79,3 +79,4 @@ def get_city(lat, lon):
 
 if __name__ == "__main__":
     print(get_city(10.7229372, 106.7425839))
+    print(get_city(16.6634755, 107.7861214))
