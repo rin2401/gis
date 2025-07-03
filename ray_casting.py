@@ -3,8 +3,17 @@ import numpy as np
 
 path = "data/Việt Nam (tỉnh thành).geojson"
 # path = "data/Việt Nam (quận huyện) - T0107.geojson"
+path = "data/Hồ Chí Minh (phường xã) - T0107.geojson"
 with open(path, "r") as f:
     data = json.load(f)
+
+
+with open("data/data.json") as f:
+    meta = json.load(f)
+
+M = {}
+for x in meta:
+    M[x["MA_DIACHINH"]] = x
 
 
 def point_in_polygon(point, polygon):
@@ -68,15 +77,13 @@ def get_city(lat, lon):
     for d in data["features"]:
         coords = d["geometry"]["coordinates"]
 
-        name = d["properties"]["ten"]
-
         for x in coords:
             polygon = x[0]
             point = (lon, lat)
             if point_in_polygon(point, polygon):
-                return name
+                return M[d["properties"]["ma"]]
 
 
 if __name__ == "__main__":
     print(get_city(10.7229372, 106.7425839))
-    print(get_city(16.6634755, 107.7861214))
+    # print(get_city(16.6634755, 107.7861214))

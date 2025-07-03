@@ -6,13 +6,15 @@ import urllib3
 
 urllib3.disable_warnings()
 
+DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def get_total():
     url = "https://gis.vn/api/diachinh/Diachinh_GetDMDiachinh_Tatca"
     res = requests.post(url, verify=False).json()
     res = res["result"]
 
-    with open("data/data.json", "w") as f:
+    with open(os.path.join(DIR, "data/data.json"), "w") as f:
         f.write(json.dumps(res, ensure_ascii=False, indent=4))
 
     return res
@@ -34,9 +36,9 @@ def get_geojson(id, sapnhap=False):
         return data
 
     if sapnhap:
-        OUT = f"data/satnhap_geojson/{id}.json"
+        OUT = os.path.join(DIR, f"data/satnhap_geojson/{id}.json")
     else:
-        OUT = f"data/geojson/{id}.json"
+        OUT = os.path.join(DIR, f"data/geojson/{id}.json")
     with open(OUT, "w") as f:
         f.write(json.dumps(data, ensure_ascii=False, indent=4))
 
@@ -46,7 +48,7 @@ def get_geojson(id, sapnhap=False):
 if __name__ == "__main__":
     data = get_total()
     for d in tqdm(data):
-        if os.path.exists(f"data/geojson/{d['MA_DIACHINH']}.json"):
+        if os.path.exists(os.path.join(DIR, f"data/geojson/{d['MA_DIACHINH']}.json")):
             continue
         id = d["CO_GEOJSON"]
         if not id:

@@ -29,6 +29,8 @@
             <div class="input-group mb-3">
                 <span class="input-group-text">GeoJSON</span>
                 <select id="geojson-select" class="form-select">
+                    <option value="data/Hồ Chí Minh (phường xã) - T0107.geojson">
+                        Hồ Chí Minh (phường xã) - T0107</option>
                     <option value="data/Việt Nam (tỉnh thành).geojson">
                         Việt Nam (tỉnh thành)</option>
                     <option value="data/Việt Nam (tỉnh thành) - T0107.geojson">
@@ -66,6 +68,7 @@
         </div>
         <script>
             let geojson = null;
+            let geomap = {}
 
             // Helper: show/hide spinner
             function setSpinner(show) {
@@ -121,12 +124,31 @@
                         showResult('Failed to load GeoJSON.', 'danger');
                     });
             }
+
+            function loadGeoMap(url) {
+                geomap = {};
+                hideResult();
+                setSpinner(true);
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        for (const x of data) {
+                            geomap[x["MA_DIACHINH"]] = x;
+                        }
+                        setSpinner(false);
+                    })
+                    .catch(e => {
+                        setSpinner(false);
+                    });
+            }
             // Initial load
+            loadGeoMap("data/data.json");
             const geojsonSelect = document.getElementById('geojson-select');
             loadGeoJSON(geojsonSelect.value);
             geojsonSelect.addEventListener('change', function () {
                 loadGeoJSON(this.value);
             });
+
 
             function pointInPolygon(point, vs) {
                 // Ray casting algorithm for 2D polygons
@@ -173,12 +195,12 @@
                 for (const feature of geojson.features) {
                     if (feature.geometry.type === 'MultiPolygon') {
                         if (pointInMultiPolygon([lon, lat], feature.geometry.coordinates)) {
-                            found = feature.properties.ten;
+                            found = feature.properties.ma;
                             break;
                         }
                     } else if (feature.geometry.type === 'Polygon') {
                         if (pointInPolygon([lon, lat], feature.geometry.coordinates[0])) {
-                            found = feature.properties.ten;
+                            found = feature.properties.ma;
                             break;
                         }
                     }
@@ -186,9 +208,11 @@
                 await sleep(100);
                 setSpinner(false);
                 if (found) {
-                    showResult('Province: ' + found, 'success');
+                    let meta = geomap[found]
+                    let address = [meta["TEN_DIACHINH_CAP3"], meta["TEN_DIACHINH_CAP2"], meta["TEN_DIACHINH_CAP1"]].join(", ")
+                    showResult('Address: ' + address, 'success');
                 } else {
-                    showResult('No province found for this location.', 'info');
+                    showResult('No address found for this location.', 'info');
                 }
             }
         </script>

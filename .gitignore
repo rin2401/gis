@@ -2,3 +2,4 @@
 *.zip
 data/geojson
 data/satnhap_geojson
+__pycache__
