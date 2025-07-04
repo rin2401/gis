@@ -202,12 +202,12 @@
                 for (const feature of geojson.features) {
                     if (feature.geometry.type === 'MultiPolygon') {
                         if (pointInMultiPolygon([lon, lat], feature.geometry.coordinates)) {
-                            found = feature.properties.ma;
+                            found = feature.properties;
                             break;
                         }
                     } else if (feature.geometry.type === 'Polygon') {
                         if (pointInPolygon([lon, lat], feature.geometry.coordinates[0])) {
-                            found = feature.properties.ma;
+                            found = feature.properties;
                             break;
                         }
                     }
@@ -215,8 +215,16 @@
                 await sleep(100);
                 setSpinner(false);
                 if (found) {
-                    let meta = geomap[found]
-                    let address = [meta["TEN_DIACHINH_CAP3"], meta["TEN_DIACHINH_CAP2"], meta["TEN_DIACHINH_CAP1"]].join(", ")
+                    let meta = geomap[found.ma]
+                    console.log(found, meta)
+                    let address;
+                    if (meta) {
+                        address = [meta["TEN_DIACHINH_CAP3"], meta["TEN_DIACHINH_CAP2"], meta["TEN_DIACHINH_CAP1"]]
+                        address = address.filter(x => x)
+                        address = address.join(", ")
+                    } else {
+                        address = found.ten
+                    }
                     showResult('Address: ' + address, 'success');
                 } else {
                     showResult('No address found for this location.', 'info');
