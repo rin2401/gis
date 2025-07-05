@@ -10,6 +10,10 @@
     <meta charset="utf-8" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -68,159 +72,214 @@
                 <div id="result" class="alert alert-info" style="display:none;"></div>
             </div>
         </div>
-        <script>
-            let geojson = null;
-            let geomap = {}
+    </div>
+    <div id="map" style="height: 600px;"></div>
+    <script>
+        let geojson = null;
+        let geomap = {}
 
-            // Helper: show/hide spinner
-            function setSpinner(show) {
-                document.getElementById('spinner').style.display = show ? '' : 'none';
-            }
-            // Helper: show result in Bootstrap alert
-            function showResult(msg, type = 'info') {
-                const resultDiv = document.getElementById('result');
-                resultDiv.className = 'alert alert-' + type;
-                resultDiv.innerText = msg;
-                resultDiv.style.display = '';
-            }
-            function hideResult() {
-                document.getElementById('result').style.display = 'none';
-            }
+        function setSpinner(show) {
+            document.getElementById('spinner').style.display = show ? '' : 'none';
+        }
+        function showResult(msg, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'alert alert-' + type;
+            resultDiv.innerText = msg;
+            resultDiv.style.display = '';
+        }
+        function hideResult() {
+            document.getElementById('result').style.display = 'none';
+        }
+        window.addEventListener('DOMContentLoaded', function () {
+            getLocation();
+        });
 
-            // Try to set lat/lon inputs from browser GPS on page load
-            window.addEventListener('DOMContentLoaded', function () {
-                getLocation();
-            });
-            function getLocation() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function (position) {
-                        document.getElementById('lat').value = position.coords.latitude;
-                        document.getElementById('lon').value = position.coords.longitude;
-                        if (geojson) {
-                            findAddress();
-                        }
-                    }, function (err) {
-                        showResult('Could not get your location. You can enter it manually.', 'warning');
-                    });
-                } else {
-                    showResult('Geolocation is not supported by this browser.', 'danger');
-                }
-            }
+        function getLocation() {
+            map.locate({
+                setView: true,
+                enableHighAccuracy: true,
+            }).on("locationfound", (e) => {
+                console.log(e);
 
-            async function loadGeoJSON(url) {
-                console.log(url);
-                if (window.location.hostname.includes("github")) {
-                    url = "https://media.githubusercontent.com/media/rin2401/gis/master/" + url;
+                document.getElementById('lat').value = e.latitude;
+                document.getElementById('lon').value = e.longitude;
+                if (geojson) {
+                    findAddress();
                 }
 
-                hideResult();
-                setSpinner(true);
-                const response = await fetch(url)
-                geojson = await response.json()
-                setSpinner(false);
-                showResult('GeoJSON loaded.', 'success');
-            }
-
-            async function loadGeoMap(url) {
-                geomap = {};
-                hideResult();
-                setSpinner(true);
-                const response = await fetch(url)
-                const data = await response.json()
-                for (const x of data) {
-                    geomap[x["MA_DIACHINH"]] = x;
+                if (marker) {
+                    map.removeLayer(marker);
                 }
-                setSpinner(false);
-            }
 
-            const geojsonSelect = document.getElementById('geojson-select');
-            Promise.all([
-                loadGeoMap("data/data.json"),
-                loadGeoJSON(geojsonSelect.value)
-            ]).then(() => {
-                findAddress();
-            });
-
-            geojsonSelect.addEventListener('change', async function () {
-                await loadGeoJSON(this.value);
-                findAddress();
-            });
-
-            function pointInPolygon(point, vs) {
-                // Ray casting algorithm for 2D polygons
-                let x = point[0], y = point[1];
-                let inside = false;
-                for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-                    let xi = vs[i][0], yi = vs[i][1];
-                    let xj = vs[j][0], yj = vs[j][1];
-                    let intersect = ((yi > y) !== (yj > y)) &&
-                        (x < (xj - xi) * (y - yi) / (yj - yi + 1e-15) + xi);
-                    if (intersect) inside = !inside;
+                marker = L.marker([e.latitude, e.longitude]).bindPopup(
+                    `Your are here :)<br>${e.latitude}<br>${e.longitude}`
+                )
+                map.addLayer(marker)
+            }).on("locationerror", (e) => {
+                console.log(e);
+                if (!marker) {
+                    marker = L.marker([document.getElementById('lat').value, document.getElementById('lon').value])
+                    map.addLayer(marker)
                 }
-                return inside;
+
+                showResult('Could not get your location. You can enter it manually.', 'warning');
+            })
+
+        }
+
+        async function loadGeoJSON(url) {
+            console.log(url);
+            if (window.location.hostname.includes("github")) {
+                url = "https://media.githubusercontent.com/media/rin2401/gis/master/" + url;
             }
 
-            function pointInMultiPolygon(point, multiPoly) {
-                // multiPoly: [ [ [ [lon, lat], ... ] ] ]
-                for (const poly of multiPoly) {
-                    for (const ring of poly) {
-                        if (pointInPolygon(point, ring)) return true;
+            hideResult();
+            setSpinner(true);
+            const response = await fetch(url)
+            geojson = await response.json()
+            setSpinner(false);
+            showResult('GeoJSON loaded.', 'success');
+            addGeoJSONtoMap();
+        }
+
+        async function loadGeoMap(url) {
+            geomap = {};
+            hideResult();
+            setSpinner(true);
+            const response = await fetch(url)
+            const data = await response.json()
+            for (const x of data) {
+                geomap[x["MA_DIACHINH"]] = x;
+            }
+            setSpinner(false);
+        }
+
+        const geojsonSelect = document.getElementById('geojson-select');
+        Promise.all([
+            loadGeoMap("data/data.json"),
+            loadGeoJSON(geojsonSelect.value)
+        ]).then(() => {
+            findAddress();
+        });
+
+        geojsonSelect.addEventListener('change', async function () {
+            await loadGeoJSON(this.value);
+            findAddress();
+        });
+
+        function pointInPolygon(point, vs) {
+            // Ray casting algorithm for 2D polygons
+            let x = point[0], y = point[1];
+            let inside = false;
+            for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+                let xi = vs[i][0], yi = vs[i][1];
+                let xj = vs[j][0], yj = vs[j][1];
+                let intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi + 1e-15) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        function pointInMultiPolygon(point, multiPoly) {
+            // multiPoly: [ [ [ [lon, lat], ... ] ] ]
+            for (const poly of multiPoly) {
+                for (const ring of poly) {
+                    if (pointInPolygon(point, ring)) return true;
+                }
+            }
+            return false;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        async function findAddress() {
+            hideResult();
+            setSpinner(true);
+            const lat = parseFloat(document.getElementById('lat').value);
+            const lon = parseFloat(document.getElementById('lon').value);
+            console.log(lat, lon);
+            if (isNaN(lat) || isNaN(lon)) {
+                showResult('Please enter valid latitude and longitude.', 'warning');
+                return;
+            }
+            if (!geojson) {
+                showResult('GeoJSON not loaded yet.', 'danger');
+                return;
+            }
+            let found = null;
+            for (const feature of geojson.features) {
+                if (feature.geometry.type === 'MultiPolygon') {
+                    if (pointInMultiPolygon([lon, lat], feature.geometry.coordinates)) {
+                        found = feature.properties;
+                        break;
+                    }
+                } else if (feature.geometry.type === 'Polygon') {
+                    if (pointInPolygon([lon, lat], feature.geometry.coordinates[0])) {
+                        found = feature.properties;
+                        break;
                     }
                 }
-                return false;
             }
-
-            function sleep(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
-            }
-            async function findAddress() {
-                hideResult();
-                setSpinner(true);
-                const lat = parseFloat(document.getElementById('lat').value);
-                const lon = parseFloat(document.getElementById('lon').value);
-                console.log(lat, lon);
-                if (isNaN(lat) || isNaN(lon)) {
-                    showResult('Please enter valid latitude and longitude.', 'warning');
-                    return;
-                }
-                if (!geojson) {
-                    showResult('GeoJSON not loaded yet.', 'danger');
-                    return;
-                }
-                let found = null;
-                for (const feature of geojson.features) {
-                    if (feature.geometry.type === 'MultiPolygon') {
-                        if (pointInMultiPolygon([lon, lat], feature.geometry.coordinates)) {
-                            found = feature.properties;
-                            break;
-                        }
-                    } else if (feature.geometry.type === 'Polygon') {
-                        if (pointInPolygon([lon, lat], feature.geometry.coordinates[0])) {
-                            found = feature.properties;
-                            break;
-                        }
-                    }
-                }
-                await sleep(100);
-                setSpinner(false);
-                if (found) {
+            await sleep(100);
+            setSpinner(false);
+            if (found) {
                 console.log(found)
                 let address;
                 if (geojsonSelect.value.includes("T0107")) {
                     let meta = geomap[found.ma]
                     console.log(meta)
-                        address = [meta["TEN_DIACHINH_CAP3"], meta["TEN_DIACHINH_CAP2"], meta["TEN_DIACHINH_CAP1"]]
-                        address = address.filter(x => x)
-                        address = address.join(", ")
-                    } else {
-                        address = found.ten
-                    }
-                    showResult('Address: ' + address, 'success');
+                    address = [meta["TEN_DIACHINH_CAP3"], meta["TEN_DIACHINH_CAP2"], meta["TEN_DIACHINH_CAP1"]]
+                    address = address.filter(x => x)
+                    address = address.join(", ")
                 } else {
-                    showResult('No address found for this location.', 'info');
+                    address = found.ten
                 }
+                showResult('Address: ' + address, 'success');
+            } else {
+                showResult('No address found for this location.', 'info');
             }
-        </script>
+        }
+    </script>
+    <script>
+        const map = L.map('map').setView([10.7220765, 106.743256], 13);
+        const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map)
+
+
+        var myStyle = {
+            "color": "#ff7800",
+            "weight": 2,
+            "opacity": 0.65
+        }
+
+        var geoJsonLayer = L.geoJSON(null, {
+            style: myStyle,
+        }).addTo(map)
+
+        function addGeoJSONtoMap() {
+            if (geoJsonLayer) {
+                geoJsonLayer.clearLayers();
+            }
+            geoJsonLayer.addData(geojson);
+        }
+
+        var marker = null;
+        map.on('click', function (e) {
+            console.log("Click", e.latlng);
+            document.getElementById('lat').value = e.latlng.lat;
+            document.getElementById('lon').value = e.latlng.lng;
+            findAddress();
+
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker(e.latlng).addTo(map);
+        });
+    </script>
 </body>
 
 </html>
