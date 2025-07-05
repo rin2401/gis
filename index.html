@@ -204,10 +204,11 @@
                 await sleep(100);
                 setSpinner(false);
                 if (found) {
+                console.log(found)
+                let address;
+                if (geojsonSelect.value.includes("T0107")) {
                     let meta = geomap[found.ma]
-                    console.log(found, meta)
-                    let address;
-                    if (meta) {
+                    console.log(meta)
                         address = [meta["TEN_DIACHINH_CAP3"], meta["TEN_DIACHINH_CAP2"], meta["TEN_DIACHINH_CAP1"]]
                         address = address.filter(x => x)
                         address = address.join(", ")
