@@ -50,7 +50,7 @@
                 <input id="lon" value="106.660172" class="form-control" />
             </div>
             <div class="input-group mb-3">
-                <button onclick="findProvince()" class="btn btn-warning flex-grow-1">Find Province</button>
+                <button onclick="findAddress()" class="btn btn-warning flex-grow-1">Find Address</button>
                 <button onclick="getLocation()" class="btn btn-outline-warning" title="Use My Location" type="button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-geo-alt" viewBox="0 0 16 16">
@@ -97,7 +97,7 @@
                         document.getElementById('lat').value = position.coords.latitude;
                         document.getElementById('lon').value = position.coords.longitude;
                         if (geojson) {
-                            findProvince();
+                            findAddress();
                         }
                     }, function (err) {
                         showResult('Could not get your location. You can enter it manually.', 'warning');
@@ -138,12 +138,12 @@
                 loadGeoMap("data/data.json"),
                 loadGeoJSON(geojsonSelect.value)
             ]).then(() => {
-                findProvince();
+                findAddress();
             });
 
             geojsonSelect.addEventListener('change', async function () {
                 await loadGeoJSON(this.value);
-                findProvince();
+                findAddress();
             });
 
             function pointInPolygon(point, vs) {
@@ -173,7 +173,7 @@
             function sleep(ms) {
                 return new Promise(resolve => setTimeout(resolve, ms));
             }
-            async function findProvince() {
+            async function findAddress() {
                 hideResult();
                 setSpinner(true);
                 const lat = parseFloat(document.getElementById('lat').value);
