@@ -91,7 +91,6 @@
             window.addEventListener('DOMContentLoaded', function () {
                 getLocation();
             });
-            // Manual trigger for "Use My Location" button
             function getLocation() {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(function (position) {
@@ -108,54 +107,44 @@
                 }
             }
 
-            // Load GeoJSON based on dropdown selection
-            function loadGeoJSON(url) {
+            async function loadGeoJSON(url) {
                 console.log(url);
                 if (window.location.hostname.includes("github")) {
                     url = "https://media.githubusercontent.com/media/rin2401/gis/master/" + url;
                 }
 
-                geojson = null;
                 hideResult();
                 setSpinner(true);
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        geojson = data;
-                        setSpinner(false);
-                        showResult('GeoJSON loaded.', 'success');
-                        findProvince();
-                    })
-                    .catch(e => {
-                        setSpinner(false);
-                        showResult('Failed to load GeoJSON.', 'danger');
-                    });
+                const response = await fetch(url)
+                geojson = await response.json()
+                setSpinner(false);
+                showResult('GeoJSON loaded.', 'success');
             }
 
-            function loadGeoMap(url) {
+            async function loadGeoMap(url) {
                 geomap = {};
                 hideResult();
                 setSpinner(true);
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        for (const x of data) {
-                            geomap[x["MA_DIACHINH"]] = x;
-                        }
-                        setSpinner(false);
-                    })
-                    .catch(e => {
-                        setSpinner(false);
-                    });
+                const response = await fetch(url)
+                const data = await response.json()
+                for (const x of data) {
+                    geomap[x["MA_DIACHINH"]] = x;
+                }
+                setSpinner(false);
             }
-            // Initial load
-            loadGeoMap("data/data.json");
+
             const geojsonSelect = document.getElementById('geojson-select');
-            loadGeoJSON(geojsonSelect.value);
-            geojsonSelect.addEventListener('change', function () {
-                loadGeoJSON(this.value);
+            Promise.all([
+                loadGeoMap("data/data.json"),
+                loadGeoJSON(geojsonSelect.value)
+            ]).then(() => {
+                findProvince();
             });
 
+            geojsonSelect.addEventListener('change', async function () {
+                await loadGeoJSON(this.value);
+                findProvince();
+            });
 
             function pointInPolygon(point, vs) {
                 // Ray casting algorithm for 2D polygons
