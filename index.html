@@ -73,6 +73,8 @@
         var geos = {
             "Hồ Chí Minh (phường xã)": "data/Hồ Chí Minh (phường xã).geojson",
             "Hồ Chí Minh (phường xã) - T0107": "data/Hồ Chí Minh (phường xã) - T0107.geojson",
+            "Việt Nam (tỉnh thành) - RGHC": "data/RGHC/DiaPhan_Tinh_2025.geojson",
+            "Việt Nam (phường xã) - RGHC": "data/RGHC/DiaPhan_Xa_2025.geojson",
             "Việt Nam (phường xã) - T0107": "data/Việt Nam (phường xã) - T0107.geojson",
             "Việt Nam (tỉnh thành)": "data/Việt Nam (tỉnh thành).geojson",
             "Việt Nam (tỉnh thành) - T0107": "data/Việt Nam (tỉnh thành) - T0107.geojson",
@@ -238,6 +240,8 @@
                     let meta = geomap[found.ma]
                     console.log(meta)
                     address = [meta.TEN_DIACHINH_CAP3, meta.TEN_DIACHINH_CAP2, meta.TEN_DIACHINH_CAP1].filter(x => x).join(", ")
+                } else if (geojsonSelect.value.includes("RGHC")) {
+                    address = [found.tenXa, found.tenTinh].filter(x => x).join(", ")
                 } else {
                     if (found.TEN_DIACHINH_CAP2) {
                         address = [found.TEN_DIACHINH_CAP2, found.TEN_DIACHINH_CAP1].filter(x => x).join(", ")

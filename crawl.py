@@ -1,5 +1,7 @@
 import json
+from operator import ge
 import os
+from typing import Counter
 import requests
 from tqdm.auto import tqdm
 import urllib3
@@ -65,12 +67,11 @@ if __name__ == "__main__":
     sapnhap = True
     data = get_total(sapnhap=sapnhap)
     print("Total:", len(data))
-    data = [d for d in data if d["CO_GEOJSON"]]
+    # data = [d for d in data if d["CO_GEOJSON"]]
     print("CO_GEOJSON:", len(data))
-
     c = 0
     for d in tqdm(data):
-        id = d["CO_GEOJSON"]
+        id = d["MA_DIACHINH"]
         res = get_geojson(id, sapnhap=sapnhap)
         if res:
             c += 1
