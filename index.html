@@ -14,6 +14,8 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -63,6 +65,9 @@
                 </div>
             </div>
             <div>
+                <div id="search_result" class="alert alert-info" style="display:none;"></div>
+            </div>
+            <div>
                 <div id="result" class="alert alert-info" style="display:none;"></div>
             </div>
         </div>
@@ -93,6 +98,12 @@
         }
         function showResult(msg, type = 'info') {
             const resultDiv = document.getElementById('result');
+            resultDiv.className = 'alert alert-' + type;
+            resultDiv.innerText = msg;
+            resultDiv.style.display = '';
+        }
+        function showSearchResult(msg, type = 'info') {
+            const resultDiv = document.getElementById('search_result');
             resultDiv.className = 'alert alert-' + type;
             resultDiv.innerText = msg;
             resultDiv.style.display = '';
@@ -203,7 +214,10 @@
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
-        async function findAddress() {
+        async function findAddress(hide = true) {
+            if (hide) {
+                document.getElementById('search_result').style.display = 'none';
+            }
             hideResult();
             setSpinner(true);
             const lat = parseFloat(document.getElementById('lat').value);
@@ -211,6 +225,7 @@
             console.log(lat, lon);
             if (isNaN(lat) || isNaN(lon)) {
                 showResult('Please enter valid latitude and longitude.', 'warning');
+                setSpinner(false);
                 return;
             }
             if (!geojson) {
@@ -249,7 +264,8 @@
                         address = found.ten
                     }
                 }
-                showResult('Address: ' + address, 'success');
+                showResult(`Address: ${address}`, 'success');
+
             } else {
                 showResult('No address found for this location.', 'info');
             }
@@ -285,6 +301,25 @@
         }
         loadTile();
 
+
+        L.Control.geocoder({
+            defaultMarkGeocode: false,
+            position: 'topright',
+            placeholder: 'Search...',
+            errorMessage: 'Location not found.',
+            geocoder: L.Control.Geocoder.nominatim({
+                serviceUrl: 'https://nominatim.openstreetmap.org/'
+            })
+        }).on('markgeocode', function (e) {
+            console.log(e)
+            map.fitBounds(e.geocode.bbox);
+            showSearchResult(`Location: ${e.geocode.name}`, 'info');
+            if (geojson) {
+                document.getElementById('lat').value = e.geocode.center.lat;
+                document.getElementById('lon').value = e.geocode.center.lng;
+                findAddress(false);
+            }
+        }).addTo(map);
 
         var myStyle = {
             "color": "#ff7800",
