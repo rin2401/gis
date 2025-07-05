@@ -32,18 +32,7 @@
 
             <div class="input-group mb-3">
                 <span class="input-group-text">GeoJSON</span>
-                <select id="geojson-select" class="form-select">
-                    <option value="data/Hồ Chí Minh (phường xã) - T0107.geojson">
-                        Hồ Chí Minh (phường xã) - T0107</option>
-                    <option value="data/Việt Nam (phường xã) - T0107.geojson">
-                        Việt Nam (phường xã) - T0107</option>
-                    <option value="data/Việt Nam (tỉnh thành).geojson">
-                        Việt Nam (tỉnh thành)</option>
-                    <option value="data/Việt Nam (tỉnh thành) - T0107.geojson">
-                        Việt Nam (tỉnh thành) - T0107</option>
-                    <option value="data/Việt Nam (quận huyện) - T0107.geojson">
-                        Việt Nam (quận huyện) - T0107</option>
-                </select>
+                <select id="geojson-select" class="form-select"></select>
             </div>
             <div class="input-group mb-3">
                 <span class="input-group-text">Latitude</span>
@@ -80,6 +69,20 @@
     </div>
     <div id="map" style="height: 600px;"></div>
     <script>
+        const geojsonSelect = document.getElementById('geojson-select');
+        var geos = {
+            "Hồ Chí Minh (phường xã) - T0107": "data/Hồ Chí Minh (phường xã) - T0107.geojson",
+            "Hồ Chí Minh (phường xã)": "data/Hồ Chí Minh (phường xã).geojson",
+            "Việt Nam (phường xã) - T0107": "data/Việt Nam (phường xã) - T0107.geojson",
+            "Việt Nam (tỉnh thành)": "data/Việt Nam (tỉnh thành).geojson",
+            "Việt Nam (tỉnh thành) - T0107": "data/Việt Nam (tỉnh thành) - T0107.geojson",
+            "Việt Nam (quận huyện) - T0107": "data/Việt Nam (quận huyện) - T0107.geojson",
+        }
+        Object.entries(geos).forEach(([key, value]) => {
+            const option = new Option(key, value);
+            geojsonSelect.add(option);
+        });
+
         let geojson = null;
         let geomap = {}
 
@@ -159,7 +162,6 @@
             setSpinner(false);
         }
 
-        const geojsonSelect = document.getElementById('geojson-select');
         Promise.all([
             loadGeoMap("data/data.json"),
             loadGeoJSON(geojsonSelect.value)
@@ -235,11 +237,13 @@
                 if (geojsonSelect.value.includes("T0107")) {
                     let meta = geomap[found.ma]
                     console.log(meta)
-                    address = [meta["TEN_DIACHINH_CAP3"], meta["TEN_DIACHINH_CAP2"], meta["TEN_DIACHINH_CAP1"]]
-                    address = address.filter(x => x)
-                    address = address.join(", ")
+                    address = [meta.TEN_DIACHINH_CAP3, meta.TEN_DIACHINH_CAP2, meta.TEN_DIACHINH_CAP1].filter(x => x).join(", ")
                 } else {
-                    address = found.ten
+                    if (found.TEN_DIACHINH_CAP2) {
+                        address = [found.TEN_DIACHINH_CAP2, found.TEN_DIACHINH_CAP1].filter(x => x).join(", ")
+                    } else {
+                        address = found.ten
+                    }
                 }
                 showResult('Address: ' + address, 'success');
             } else {
