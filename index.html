@@ -296,7 +296,7 @@
             console.log(tileSelect.value)
             tile = L.tileLayer(tileSelect.value, {
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                attribution: '&copy; ' + tileSelect.options[tileSelect.selectedIndex].text.split(" -")[0]
+                attribution: '&copy; ' + tileSelect.options[tileSelect.selectedIndex].text.split(" -")[0],
             }).addTo(map);
         }
         loadTile();
@@ -317,6 +317,12 @@
             if (geojson) {
                 document.getElementById('lat').value = e.geocode.center.lat;
                 document.getElementById('lon').value = e.geocode.center.lng;
+
+                if (marker) {
+                    map.removeLayer(marker);
+                }
+                marker = L.marker([e.geocode.center.lat, e.geocode.center.lng]).addTo(map);
+
                 findAddress(false);
             }
         }).addTo(map);
