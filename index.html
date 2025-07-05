@@ -54,6 +54,11 @@
                 <input id="lon" value="106.660172" class="form-control" />
             </div>
             <div class="input-group mb-3">
+                <span class="input-group-text">Tile</span>
+                <select id="tile-select" class="form-select">
+                </select>
+            </div>
+            <div class="input-group mb-3">
                 <button onclick="findAddress()" class="btn btn-warning flex-grow-1">Find Address</button>
                 <button onclick="getLocation()" class="btn btn-outline-warning" title="Use My Location" type="button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -243,11 +248,34 @@
         }
     </script>
     <script>
+        const tileSelect = document.getElementById('tile-select');
+        var tiles = {
+            "Google - Roadmap": "https://{s}.google.com/vt/lyrm=m&x={x}&y={y}&z={z}",
+            "Google - Satellite": "https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+            "OpenStreetMap": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        }
+        Object.entries(tiles).forEach(([key, value]) => {
+            const option = new Option(key, value);
+            tileSelect.add(option);
+        });
+
+        tileSelect.addEventListener('change', async function () {
+            loadTile()
+        });
+
         const map = L.map('map').setView([10.7220765, 106.743256], 13);
-        const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map)
+        var tile = null;
+        function loadTile() {
+            if (tile) {
+                map.removeLayer(tile);
+            }
+            console.log(tileSelect.value)
+            tile = L.tileLayer(tileSelect.value, {
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: '&copy; ' + tileSelect.options[tileSelect.selectedIndex].text.split(" -")[0]
+            }).addTo(map);
+        }
+        loadTile();
 
 
         var myStyle = {
