@@ -377,6 +377,10 @@
 
                 layer.on('popupopen', function (e) {
                     e.target.getTooltip()._container.style.visibility = 'hidden';
+                    document.getElementById('lat').value = e.target._latlng.lat;
+                    document.getElementById('lon').value = e.target._latlng.lng;
+                    findAddress();
+                    console.log(e.target);
                 })
                 layer.on('popupclose', function (e) {
                     e.target.getTooltip()._container.style.visibility = 'visible';
