@@ -16,6 +16,9 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -162,7 +165,6 @@
             showResult('GeoJSON loaded.', 'success');
             addGeoJSONtoMap();
         }
-
         async function loadGeoMap(url) {
             geomap = {};
             hideResult();
@@ -356,6 +358,49 @@
             }
             marker = L.marker(e.latlng).addTo(map);
         });
+
+
+
+        var markers = L.markerClusterGroup();
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties) {
+                let popupText = "";
+                if (feature.properties.location?.name) {
+                    popupText += `<a href="${feature.properties.google_maps_url}" target="_blank"><strong>${feature.properties.location?.name}</strong></a>`;
+
+                    layer.bindTooltip(feature.properties.location?.name, { permanent: true });
+                }
+                if (feature.properties.location?.address) {
+                    popupText += `<br>Địa chỉ: ${feature.properties.location?.address}`;
+                }
+                layer.bindPopup(popupText);
+
+                layer.on('popupopen', function (e) {
+                    e.target.getTooltip()._container.style.visibility = 'hidden';
+                })
+                layer.on('popupclose', function (e) {
+                    e.target.getTooltip()._container.style.visibility = 'visible';
+                });
+
+                markers.addLayer(layer);
+            }
+        }
+
+        async function loadPlace(url) {
+            console.log(url);
+            const response = await fetch(url)
+            var place = await response.json()
+            console.log(place);
+
+            L.geoJSON(place, {
+                style: myStyle,
+                onEachFeature: onEachFeature
+            })
+
+            map.addLayer(markers);
+        }
+
+        loadPlace("data/Takeout/Saved Places.json");
     </script>
 </body>
 
