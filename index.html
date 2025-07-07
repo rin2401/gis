@@ -303,27 +303,56 @@
         }
         loadTile();
 
+        var locations = []
+
+        const customGeocoder = {
+            geocode: function (query, map) {
+                console.log("Geocode:", query)
+                const results = [];
+                locations.forEach(location => {
+                    if (location.name.toLowerCase().includes(query.toLowerCase())) {
+                        results.push({
+                            name: location.name,
+                            center: L.latLng(location.lat, location.lng),
+                            bbox: L.latLngBounds(
+                                L.latLng(location.lat - 0.001, location.lng - 0.001),
+                                L.latLng(location.lat + 0.001, location.lng + 0.001)
+                            ),
+                            marker: location.marker
+                        });
+                    }
+                });
+
+                return results;
+            },
+
+            suggest: function (query, map) {
+                return this.geocode(query, map);
+            }
+        };
 
         L.Control.geocoder({
             defaultMarkGeocode: false,
             position: 'topright',
             placeholder: 'Search...',
             errorMessage: 'Location not found.',
-            geocoder: L.Control.Geocoder.nominatim({
-                serviceUrl: 'https://nominatim.openstreetmap.org/'
-            })
+            geocoder: customGeocoder,
+            // geocoder: L.Control.Geocoder.nominatim({
+            //     serviceUrl: 'https://nominatim.openstreetmap.org/'
+            // })
         }).on('markgeocode', function (e) {
-            console.log(e)
-            map.fitBounds(e.geocode.bbox);
+            console.log("markgeocode:", e.geocode)
+            map.fitBounds(e.geocode.bbox)
+            e.geocode.marker.openPopup()
             showSearchResult(`Location: ${e.geocode.name}`, 'info');
             if (geojson) {
                 document.getElementById('lat').value = e.geocode.center.lat;
                 document.getElementById('lon').value = e.geocode.center.lng;
 
-                if (marker) {
-                    map.removeLayer(marker);
-                }
-                marker = L.marker([e.geocode.center.lat, e.geocode.center.lng]).addTo(map);
+                // if (marker) {
+                //     map.removeLayer(marker);
+                // }
+                // marker = L.marker([e.geocode.center.lat, e.geocode.center.lng]).addTo(map);
 
                 findAddress(false);
             }
@@ -359,22 +388,9 @@
             marker = L.marker(e.latlng).addTo(map);
         });
 
-
-
         var markers = L.markerClusterGroup();
         function onEachFeature(feature, layer) {
             if (feature.properties && feature.properties) {
-                let popupText = "";
-                if (feature.properties.location?.name) {
-                    popupText += `<a href="${feature.properties.google_maps_url}" target="_blank"><strong>${feature.properties.location?.name}</strong></a>`;
-
-                    layer.bindTooltip(feature.properties.location?.name, { permanent: true });
-                }
-                if (feature.properties.location?.address) {
-                    popupText += `<br>Địa chỉ: ${feature.properties.location?.address}`;
-                }
-                layer.bindPopup(popupText);
-
                 layer.on('popupopen', function (e) {
                     e.target.getTooltip()._container.style.visibility = 'hidden';
                     document.getElementById('lat').value = e.target._latlng.lat;
@@ -386,6 +402,22 @@
                     e.target.getTooltip()._container.style.visibility = 'visible';
                 });
 
+                let popupText = "";
+                if (feature.properties.location?.name) {
+                    popupText += `<a href="${feature.properties.google_maps_url}" target="_blank"><strong>${feature.properties.location?.name}</strong></a>`;
+
+                    layer.bindTooltip(feature.properties.location?.name, { permanent: true });
+                    locations.push({
+                        name: feature.properties.location?.name,
+                        lat: feature.geometry.coordinates[1],
+                        lng: feature.geometry.coordinates[0],
+                        marker: layer
+                    })
+                }
+                if (feature.properties.location?.address) {
+                    popupText += `<br>Địa chỉ: ${feature.properties.location?.address}`;
+                }
+                layer.bindPopup(popupText);
                 markers.addLayer(layer);
             }
         }
