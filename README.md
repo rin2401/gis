@@ -3,7 +3,8 @@
 ### Features
 - [x] Crawl gis data
 - [x] Ray casting revese from lat long
-- [x] Leaflet 
+- [x] LeafletJs
+- [x] Import and search google places: https://takeout.google.com/
 
 ### Sources
 - https://gis.vn
