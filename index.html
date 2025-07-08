@@ -19,6 +19,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/pouchdb@^5.2.0/dist/pouchdb.js"></script>
+    <script src="https://unpkg.com/leaflet.tilelayer.pouchdbcached@latest/L.TileLayer.PouchDBCached.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -299,6 +301,8 @@
             tile = L.tileLayer(tileSelect.value, {
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: '&copy; ' + tileSelect.options[tileSelect.selectedIndex].text.split(" -")[0],
+                maxZoom: 18,
+                useCache: true,
             }).addTo(map);
         }
         loadTile();
