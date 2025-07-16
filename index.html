@@ -362,14 +362,36 @@
             }
         }).addTo(map);
 
-        var myStyle = {
-            "color": "#ff7800",
-            "weight": 2,
-            "opacity": 0.65
+        function getRandomHexColor() {
+            return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
         }
 
+        function getBalancedHslColor() {
+            const h = Math.floor(Math.random() * 360);
+            const l = 30 + Math.floor(Math.random() * 40); // 30-70% lightness
+            return `hsl(${h}, 80%, ${l}%)`;
+        }
+
+        const colorPalette = ['#4285F4', '#EA4335', '#FBBC05', '#34A853', '#673AB7', '#FF6D00', '#9C27B0', '#009688'];
+        var i = 0;
+        function getRandomColorFromPalette() {
+            i = (i + 1) % colorPalette.length;
+            return colorPalette[i];
+        }
+
+        function styleFeature(feature) {
+            let color = getBalancedHslColor();
+
+            return {
+                "fillColor": color,
+                "weight": 2,
+                "opacity": 0.7
+            };
+        }
+
+
         var geoJsonLayer = L.geoJSON(null, {
-            style: myStyle,
+            style: styleFeature,
         }).addTo(map)
 
         function addGeoJSONtoMap() {
@@ -433,7 +455,6 @@
             console.log(place);
 
             L.geoJSON(place, {
-                style: myStyle,
                 onEachFeature: onEachFeature
             })
 
